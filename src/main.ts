@@ -3,8 +3,11 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import configuration from './configuration';
 
 async function bootstrap() {
+  const PORT = configuration().port ?? 3000;
+  const VERSION = configuration().version;
   const app = await NestFactory.create(AppModule);
 
   app.enableCors();
@@ -12,15 +15,15 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
-    .setVersion('1.0')
-    .addTag('cats')
+    .setTitle('hautrank2 server')
+    .setDescription('This is my server where I can do everthing with my apps')
+    .setVersion(VERSION)
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(PORT);
+  console.log(`🚀 Server running at: http://localhost:${PORT}`);
 }
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap();

@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UploadService } from './core/services/upload.service';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from './core/pipes/validation.pipe';
+import { RecruitModule } from './modules/recruit/recruit.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ValidationPipe } from './core/pipes/validation.pipe';
       load: [configuration],
     }),
     MongooseModule.forRoot(process.env.DATABASE_URL || ''),
+    RecruitModule,
   ],
   controllers: [AppController],
   providers: [

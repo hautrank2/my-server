@@ -1,55 +1,18 @@
-export interface Team {
-  _id: string;
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type TeamDocument = Team & Document;
+
+@Schema({ timestamps: true })
+export class Team {
+  @Prop({ required: true })
   name: string;
+
+  @Prop()
   description: string;
-  createdAt: string;
-  updatedAt: string;
-  members?: TeamMember[];
+
+  @Prop({ type: [Types.ObjectId], ref: 'TeamMember', default: [] })
+  members: Types.ObjectId[];
 }
 
-export interface TeamMember {
-  _id: string;
-  name: string;
-  birthday: string; // YYYY-MM-DD
-  nickname: string;
-  description: string;
-  avatar: string;
-  email: string;
-  roles: TeamRole[];
-  hobbies: string[];
-  socials: Social[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Social {
-  platform: string;
-  url: string;
-}
-
-export type TeamRole =
-  | 'Frontend'
-  | 'Backend'
-  | 'Fullstack'
-  | 'Designer'
-  | 'DevOps'
-  | 'QA'
-  | 'PO'
-  | 'PM'
-  | 'BA'
-  | 'Intern'
-  | 'Unity';
-
-export const TEAM_ROLES: TeamRole[] = [
-  'Frontend',
-  'Backend',
-  'Fullstack',
-  'Designer',
-  'DevOps',
-  'QA',
-  'PO',
-  'PM',
-  'BA',
-  'Intern',
-  'Unity',
-];
+export const TeamSchema = SchemaFactory.createForClass(Team);

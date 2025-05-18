@@ -7,21 +7,59 @@ import {
   Patch,
   Delete,
   Query,
+  UseInterceptors,
+  UploadedFile,
+  InternalServerErrorException,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { TeamMemberService } from './team-member.service';
 import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { TeamQueryDto } from '../team/dto/query-team.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadService } from 'src/core/services/upload.service';
+import { catchError, from, mergeMap, of, switchMap, throwError } from 'rxjs';
 
 @ApiTags('Recruit')
 @Controller('recruit/team-member')
 export class TeamMemberController {
-  constructor(private readonly service: TeamMemberService) {}
+  constructor(
+    private readonly service: TeamMemberService,
+    private readonly uploadSrv: UploadService,
+  ) {}
 
   @Post()
-  create(@Body() dto: CreateTeamMemberDto) {
-    return this.service.create(dto);
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() dto: CreateTeamMemberDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Image required');
+    }
+    return from(
+      this.uploadSrv.uploadFile(file, ['recruit', 'team-member']),
+    ).pipe(
+      mergeMap(res =>
+        !res
+          ? throwError(
+              () => new InternalServerErrorException('Upload file failed'),
+            )
+          : this.service.create({ ...dto, avatar: res }).pipe(
+              catchError(err => {
+                return this.uploadSrv
+                  .removeFile(res)
+                  .pipe(
+                    switchMap(() =>
+                      throwError(() => new BadRequestException(err)),
+                    ),
+                  );
+              }),
+            ),
+      ),
+    );
   }
 
   @Get()
@@ -42,6 +80,23 @@ export class TeamMemberController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.service.remove(id);
+    return this.service.findOne(id).pipe(
+      switchMap(dt => {
+        if (!dt) {
+          return throwError(
+            () => new NotFoundException(`Category ${id} not found`),
+          );
+        }
+        return this.service.remove(id).pipe(
+          switchMap(() => {
+            if (dt.avatar) return this.uploadSrv.removeFile(dt.avatar);
+            return of(null);
+          }),
+        );
+      }),
+      catchError(err =>
+        throwError(() => new InternalServerErrorException(err)),
+      ),
+    );
   }
 }

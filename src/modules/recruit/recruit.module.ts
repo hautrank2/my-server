@@ -7,6 +7,7 @@ import { TeamController } from './team/team.controller';
 import { TeamService } from './team/team.service';
 import { TeamMemberController } from './team-member/team-member.controller';
 import { TeamMemberService } from './team-member/team-member.service';
+import { UploadService } from 'src/core/services/upload.service';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { TeamMemberService } from './team-member/team-member.service';
     ]),
   ],
   controllers: [JobController, TeamController, TeamMemberController],
-  providers: [JobService, TeamService, TeamMemberService],
+  providers: [JobService, TeamService, TeamMemberService, UploadService],
 })
 export class RecruitModule {}

@@ -16,6 +16,7 @@ export class TeamMemberService {
   ) {}
 
   create(createTeamMemberDto: CreateTeamMemberDto): Observable<TeamMember> {
+    console.log('createTeamMemberDto', createTeamMemberDto);
     const teamMember = new this.teamMemberModel(createTeamMemberDto);
     return from(teamMember.save());
   }

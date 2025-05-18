@@ -13,6 +13,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { TeamQueryDto } from './dto/query-team.dto';
+import { concatMap, from, toArray } from 'rxjs';
 
 @ApiTags('Recruit')
 @Controller('recruit/team')
@@ -22,6 +23,14 @@ export class TeamController {
   @Post()
   create(@Body() createTeamDto: CreateTeamDto) {
     return this.teamService.create(createTeamDto);
+  }
+
+  @Post('multiple')
+  createMultiple(@Body() dtos: CreateTeamDto[]) {
+    return from(dtos).pipe(
+      concatMap(dto => this.teamService.create(dto)),
+      toArray(),
+    );
   }
 
   @Get()

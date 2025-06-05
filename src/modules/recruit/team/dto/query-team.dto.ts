@@ -17,4 +17,8 @@ export class TeamQueryDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  teamId?: string;
 }

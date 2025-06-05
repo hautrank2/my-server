@@ -3,18 +3,61 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
-import { forkJoin, from, map, Observable } from 'rxjs';
-import { Team, TeamDocument } from 'src/schemas/recruit';
+import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
+import {
+  Team,
+  TeamDocument,
+  TeamMember,
+  TeamMemberDocument,
+} from 'src/schemas/recruit';
 import { PaginationResponse } from 'src/types/response';
 import { prettyObject } from 'src/types/common';
 
 @Injectable()
 export class TeamService {
-  constructor(@InjectModel(Team.name) private teamModel: Model<TeamDocument>) {}
+  constructor(
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+    @InjectModel(TeamMember.name)
+    private teamMemberModel: Model<TeamMemberDocument>,
+  ) {}
 
   create(createTeamDto: CreateTeamDto): Observable<Team> {
-    const team = new this.teamModel(createTeamDto);
-    return from(team.save());
+    const { members, ...teamDto } = createTeamDto;
+    const team = new this.teamModel(teamDto);
+
+    return from(team.save()).pipe(
+      switchMap(savedTeam =>
+        this.updateTeamMember(
+          members?.map(e => e.toString()) ?? [],
+          savedTeam,
+        ).pipe(
+          map(updatedMembers => ({
+            ...savedTeam.toObject(),
+            members: updatedMembers,
+          })),
+        ),
+      ),
+    );
+  }
+
+  updateTeamMember(
+    ids: string[],
+    team: TeamDocument,
+  ): Observable<TeamMemberDocument[]> {
+    if (!ids.length) return of([]);
+    const updatePromises = ids.map(id =>
+      this.teamMemberModel
+        .findByIdAndUpdate(id, { teamId: team._id }, { new: true })
+        .exec(),
+    );
+    return from(Promise.all(updatePromises)).pipe(
+      map(
+        results =>
+          results.filter((member): member is NonNullable<typeof member> =>
+            Boolean(member),
+          ) as TeamMemberDocument[],
+      ),
+    );
   }
 
   findAll(

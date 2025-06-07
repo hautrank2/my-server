@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
@@ -12,6 +12,7 @@ import {
 } from 'src/schemas/recruit';
 import { PaginationResponse } from 'src/types/response';
 import { prettyObject } from 'src/types/common';
+import { TeamQueryDto } from './dto/query-team.dto';
 
 @Injectable()
 export class TeamService {
@@ -60,20 +61,36 @@ export class TeamService {
     );
   }
 
-  findAll(
-    page: number = 1,
-    pageSize: number = 10,
-    options?: Record<string, any>,
-  ): Observable<PaginationResponse<Team>> {
-    page = !page ? 1 : page;
-    pageSize = !pageSize ? 10 : pageSize;
-    const skip = (page - 1) * pageSize;
+  findAll(query: TeamQueryDto): Observable<PaginationResponse<Team>> {
+    const {
+      isMembers,
+      page: _page = 1,
+      pageSize: _pageSize = 10,
+      ...options
+    } = query;
+    const page = +_page;
+    const pageSize = +_pageSize;
     const filter = options ? prettyObject(options) : {};
+    const teamMemberCollection = this.teamMemberModel.collection.name;
+    const skip = (page - 1) * pageSize;
+    const aggregates: PipelineStage[] = [];
+    aggregates.push({ $match: filter });
+    if (isMembers) {
+      aggregates.push({
+        $lookup: {
+          from: teamMemberCollection,
+          localField: '_id',
+          foreignField: 'teamId',
+          as: 'members',
+        },
+      });
+    }
+    aggregates.push({ $skip: +skip });
+    aggregates.push({ $limit: +pageSize });
+
     return forkJoin({
       total: from(this.teamModel.countDocuments(filter)),
-      items: from(
-        this.teamModel.find(filter).skip(skip).limit(pageSize).lean().exec(),
-      ),
+      items: from(this.teamModel.aggregate(aggregates).exec()),
     }).pipe(
       map(({ total, items }) => ({
         items,

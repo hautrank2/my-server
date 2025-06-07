@@ -35,8 +35,7 @@ export class TeamController {
 
   @Get()
   findAll(@Query() query: TeamQueryDto) {
-    const { page = 1, pageSize = 10, ...filters } = query;
-    return this.teamService.findAll(+page, +pageSize, filters);
+    return this.teamService.findAll(query);
   }
 
   @Get(':id')

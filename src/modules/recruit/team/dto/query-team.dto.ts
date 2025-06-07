@@ -1,5 +1,6 @@
 import { IsOptional, IsString, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { TeamMemberDocument } from 'src/schemas/recruit';
 
 export class TeamQueryDto {
   @IsOptional()
@@ -21,4 +22,17 @@ export class TeamQueryDto {
   @IsOptional()
   @IsString()
   teamId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  isMembers?: boolean;
+}
+
+export class TeamWithMembers {
+  _id: string;
+  name: string;
+  description?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  members: TeamMemberDocument[];
 }

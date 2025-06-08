@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
 import { TeamMember, TeamMemberDocument } from 'src/schemas/recruit';
@@ -30,6 +30,14 @@ export class TeamMemberService {
     pageSize = !pageSize ? 10 : pageSize;
     const skip = (page - 1) * pageSize;
     const filter = options ? prettyObject(options) : {};
+    // Ép teamId sang ObjectId nếu có
+    if (
+      filter.teamId &&
+      typeof filter.teamId === 'string' &&
+      Types.ObjectId.isValid(filter.teamId)
+    ) {
+      filter.teamId = new Types.ObjectId(filter.teamId);
+    }
     return forkJoin({
       total: from(this.teamMemberModel.countDocuments(filter)),
       items: from(

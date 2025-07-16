@@ -18,7 +18,7 @@ import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { TeamQueryDto } from '../team/dto/query-team.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, NoFilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/core/services/upload.service';
 import { catchError, from, mergeMap, of, switchMap, throwError } from 'rxjs';
 
@@ -74,6 +74,7 @@ export class TeamMemberController {
   }
 
   @Patch(':id')
+  @UseInterceptors(NoFilesInterceptor())
   update(@Param('id') id: string, @Body() dto: UpdateTeamMemberDto) {
     return this.service.update(id, dto);
   }

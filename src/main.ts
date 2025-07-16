@@ -4,11 +4,14 @@ import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import configuration from './configuration';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const PORT = configuration().port ?? 3000;
   const VERSION = configuration().version;
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: true,
+  });
 
   app.enableCors();
   app.useGlobalFilters(new HttpExceptionFilter());

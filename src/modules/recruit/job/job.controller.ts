@@ -7,12 +7,14 @@ import {
   Param,
   Delete,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { JobService } from './job.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { JobQueryDto } from './dto/query-job.dto';
+import { NoFilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Recruit')
 @Controller('recruit/job')
@@ -20,6 +22,7 @@ export class JobController {
   constructor(private readonly jobService: JobService) {}
 
   @Post()
+  @UseInterceptors(NoFilesInterceptor())
   create(@Body() createJobDto: CreateJobDto) {
     return this.jobService.create(createJobDto);
   }
@@ -36,6 +39,7 @@ export class JobController {
   }
 
   @Patch(':id')
+  @UseInterceptors(NoFilesInterceptor())
   update(@Param('id') id: string, @Body() updateJobDto: UpdateJobDto) {
     return this.jobService.update(id, updateJobDto);
   }

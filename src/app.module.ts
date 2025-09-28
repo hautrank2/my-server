@@ -5,8 +5,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './configuration';
 import { ConfigModule } from '@nestjs/config';
 import { UploadService } from './core/services/upload.service';
-import { APP_PIPE } from '@nestjs/core';
-import { ValidationPipe } from './core/pipes/validation.pipe';
 import { RecruitModule } from './modules/recruit/recruit.module';
 
 @Module({
@@ -20,14 +18,7 @@ import { RecruitModule } from './modules/recruit/recruit.module';
     RecruitModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    UploadService,
-    {
-      provide: APP_PIPE,
-      useClass: ValidationPipe,
-    },
-  ],
+  providers: [AppService, UploadService],
   exports: [UploadService],
 })
 export class AppModule {}

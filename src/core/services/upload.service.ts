@@ -1,6 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { catchError, from, map, Observable, throwError } from 'rxjs';
-import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { catchError, from, map, Observable, tap, throwError } from 'rxjs';
+import {
+  v2 as cloudinary,
+  UploadApiErrorResponse,
+  UploadApiResponse,
+} from 'cloudinary';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -29,9 +37,29 @@ export class UploadService {
         },
       ),
     ).pipe(
-      catchError(() => throwError('Upload failed')),
-      map((res: UploadApiResponse) => {
-        return res.public_id;
+      tap(res => console.log('upload success', res)),
+      map((res: UploadApiResponse) => res.public_id),
+      catchError((err: UploadApiErrorResponse) => {
+        console.error('Cloudinary upload failed:', {
+          message: err?.message,
+          http_code: err?.http_code,
+          name: err?.name,
+          error: err?.error,
+        });
+
+        if (err?.http_code === 400) {
+          return throwError(
+            () =>
+              new BadRequestException(err?.message ?? 'Invalid upload payload'),
+          );
+        }
+
+        return throwError(
+          () =>
+            new InternalServerErrorException(
+              'Upload failed, please try later !!',
+            ),
+        );
       }),
     );
   }

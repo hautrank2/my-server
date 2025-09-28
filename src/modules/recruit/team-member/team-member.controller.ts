@@ -14,14 +14,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { TeamMemberService } from './team-member.service';
-import { CreateTeamMemberDto } from './dto/create-team-member.dto';
+import {
+  CreateTeamMemberDto,
+  CreateTeamMemberDtoSwagger,
+} from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TeamQueryDto } from '../team/dto/query-team.dto';
 import { FileInterceptor, NoFilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/core/services/upload.service';
 import { catchError, from, mergeMap, of, switchMap, throwError } from 'rxjs';
-
 @ApiTags('Recruit')
 @Controller('recruit/team-member')
 export class TeamMemberController {
@@ -32,18 +34,23 @@ export class TeamMemberController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
+  @ApiOperation({ summary: 'Create team member (with image upload)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateTeamMemberDtoSwagger })
   create(
     @Body() dto: CreateTeamMemberDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
+    console.log('body', dto);
     if (!file) {
       throw new BadRequestException('Image required');
     }
     return from(
       this.uploadSrv.uploadFile(file, ['recruit', 'team-member']),
     ).pipe(
-      mergeMap(res =>
-        !res
+      mergeMap(res => {
+        console.log('upload', res);
+        return !res
           ? throwError(
               () => new InternalServerErrorException('Upload file failed'),
             )
@@ -57,8 +64,8 @@ export class TeamMemberController {
                     ),
                   );
               }),
-            ),
-      ),
+            );
+      }),
     );
   }
 

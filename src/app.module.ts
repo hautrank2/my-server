@@ -6,6 +6,7 @@ import configuration from './configuration';
 import { ConfigModule } from '@nestjs/config';
 import { UploadService } from './core/services/upload.service';
 import { RecruitModule } from './modules/recruit/recruit.module';
+import { FileModule } from './modules/file/file.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RecruitModule } from './modules/recruit/recruit.module';
     }),
     MongooseModule.forRoot(process.env.DATABASE_URL || ''),
     RecruitModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService, UploadService],

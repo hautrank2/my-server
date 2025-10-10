@@ -41,7 +41,6 @@ export class TeamMemberController {
     @Body() dto: CreateTeamMemberDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log('body', dto);
     if (!file) {
       throw new BadRequestException('Image required');
     }
